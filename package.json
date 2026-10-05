@@ -1,0 +1,14 @@
+{
+  "name": "leo-monitor",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@vercel/functions": "^3.9.11"
+  },
+  "scripts": {
+    "start": "node scripts/server.local.cjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
