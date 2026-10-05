@@ -18,6 +18,19 @@ function xmlTag(block, tag) {
   return match ? decodeXml(match[1]) : "";
 }
 
+function imageFromItem(block) {
+  const media = block.match(/<(?:media:content|media:thumbnail|enclosure)\b[^>]*\burl=["']([^"']+)["']/i);
+  const description = block.match(/<(?:description|content:encoded)(?:\s[^>]*)?>([\s\S]*?)<\/(?:description|content:encoded)>/i);
+  const embedded = description?.[1].match(/<img\b[^>]*\bsrc=["']([^"']+)["']/i);
+  const candidate = media ? decodeXml(media[1]) : embedded ? decodeXml(embedded[1]) : "";
+  try {
+    const url = new URL(candidate);
+    return url.protocol === "https:" ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
 async function handle(request) {
   try {
     const url = "https://news.google.com/rss/search?q=%22dark+web%22+OR+darknet+OR+%22darknet+market%22&hl=en-US&gl=US&ceid=US:en";
@@ -36,7 +49,7 @@ async function handle(request) {
         } catch {
           return null;
         }
-        return { title: xmlTag(block, "title"), url: itemUrl, publishedAt: xmlTag(block, "pubDate"), source: xmlTag(block, "source") || "Google News RSS" };
+        return { title: xmlTag(block, "title"), url: itemUrl, image: imageFromItem(block), publishedAt: xmlTag(block, "pubDate"), source: xmlTag(block, "source") || "Google News RSS" };
       })
       .filter((item) => item && item.title && item.url);
     return new Response(request.method === "HEAD" ? null : JSON.stringify(items), { status: 200, headers: HEADERS });

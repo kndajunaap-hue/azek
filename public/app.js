@@ -61,7 +61,7 @@ async function loadNews(){
   try{
     const response=await fetch("/api/news",{cache:"no-store",headers:{Accept:"application/json"}});if(!response.ok)throw new Error("news endpoint unavailable");
     const items=await response.json(),fragment=document.createDocumentFragment();
-    for(const item of items){const article=make("article","news-item"),link=make("a","",item.title);link.href=item.url;link.target="_blank";link.rel="noopener noreferrer";const meta=make("small","",[item.source,item.publishedAt?localTime(item.publishedAt):""].filter(Boolean).join(" · "));article.append(link,meta);fragment.append(article);}
+    for(const item of items){const article=make("article",item.image?"news-item has-image":"news-item");if(item.image){const image=make("img","news-image");image.src=item.image;image.alt="";image.loading="lazy";image.referrerPolicy="no-referrer";article.append(image);}const content=make("div","news-content"),link=make("a","",item.title);link.href=item.url;link.target="_blank";link.rel="noopener noreferrer";const meta=make("small","",[item.source,item.publishedAt?localTime(item.publishedAt):""].filter(Boolean).join(" · "));content.append(link,meta);article.append(content);fragment.append(article);}
     list.replaceChildren(fragment);status.textContent=items.length?`${items.length} berita publik · diperbarui ${localTime(new Date().toISOString())}`:"RSS tidak mengembalikan berita saat ini.";
   }catch{list.replaceChildren();status.textContent="Backend atau sumber RSS belum dapat diakses.";}
   finally{button.disabled=false;}
@@ -92,12 +92,11 @@ const demoFindings=[
 function cell(row,text){const node=document.createElement("td");node.textContent=text;row.append(node);return node;}
 function sleep(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
 $("#scanBtn").addEventListener("click",async()=>{
-  const target=$("#scanTarget").value.trim(),mode=$("#scanMode").value,status=$("#scanStatus"),bar=$("#scanBar"),button=$("#scanBtn");
-  if(!target){status.textContent="Masukkan nama target contoh untuk label simulasi.";return;}
-  button.disabled=true;bar.style.width="0%";status.textContent=`Menjalankan simulasi lokal untuk ${target}…`;
+  const mode=$("#scanMode").value,status=$("#scanStatus"),bar=$("#scanBar"),button=$("#scanBtn");
+  button.disabled=true;bar.style.width="0%";status.textContent="Menyiapkan contoh temuan lokal…";
   for(let i=1;i<=4;i++){await sleep(250);bar.style.width=`${i*25}%`;}
   const count=mode==="quick"?2:mode==="login"?2:mode==="api"?3:demoFindings.length,rows=demoFindings.slice(0,count).map(f=>{const tr=document.createElement("tr");cell(tr,f.severity);cell(tr,f.title);cell(tr,f.endpoint);cell(tr,f.cvss);cell(tr,"CONTOH");return tr;});
-  $("#scanResults").replaceChildren(...rows);status.textContent=`${rows.length} contoh temuan ditampilkan untuk ${target}. Tidak ada request jaringan yang dikirim.`;button.disabled=false;
+  $("#scanResults").replaceChildren(...rows);status.textContent=`${rows.length} contoh temuan lokal ditampilkan. Tidak ada request jaringan yang dikirim.`;button.disabled=false;
 });
 $("#scanClear").addEventListener("click",()=>{$("#scanResults").replaceChildren();$("#scanBar").style.width="0%";$("#scanStatus").textContent="Hasil lokal dibersihkan.";});
 
@@ -123,8 +122,8 @@ $("#siteAuditBtn").addEventListener("click",async()=>{
 });
 
 const samplePorts=[[443,"TCP","OPEN (CONTOH)","HTTPS"],[80,"TCP","OPEN (CONTOH)","HTTP"],[22,"TCP","FILTERED (CONTOH)","SSH"]];
-$("#srvBtn").addEventListener("click",async()=>{const target=$("#srvTarget").value.trim(),button=$("#srvBtn");if(!target){$("#srvStatus").textContent="Masukkan label host contoh.";return;}button.disabled=true;$("#srvBar").style.width="0%";for(let i=1;i<=4;i++){await sleep(200);$("#srvBar").style.width=`${i*25}%`;}const rows=samplePorts.map(([port,protocol,status,service])=>{const tr=document.createElement("tr");cell(tr,String(port));cell(tr,protocol);cell(tr,status);cell(tr,service);return tr;});$("#srvResults").replaceChildren(...rows);$("#srvStatus").textContent=`Data contoh ditampilkan untuk ${target}. Tidak ada host yang dipindai.`;button.disabled=false;});
+$("#srvBtn").addEventListener("click",async()=>{const button=$("#srvBtn");button.disabled=true;$("#srvBar").style.width="0%";for(let i=1;i<=4;i++){await sleep(200);$("#srvBar").style.width=`${i*25}%`;}const rows=samplePorts.map(([port,protocol,status,service])=>{const tr=document.createElement("tr");cell(tr,String(port));cell(tr,protocol);cell(tr,status);cell(tr,service);return tr;});$("#srvResults").replaceChildren(...rows);$("#srvStatus").textContent="Contoh port lokal ditampilkan. Tidak ada host yang dipindai.";button.disabled=false;});
 
 $("#previewBtn").addEventListener("click",()=>{$("#previewFrame").srcdoc=$("#previewHtml").value;});
-const pluginNames=["DDoS Map Visualizer","Vulnerability Scan Lab","Server Scan Lab","HTML Preview","Public Status Monitor"];
+const pluginNames=["DDoS Map Visualizer","Vulnerability Scan Lab","Server Scan Lab","Deface Preview","Public Status Monitor"];
 $("#plugGrid").replaceChildren(...pluginNames.map(name=>{const label=document.createElement("label");label.className="plugin-item";const title=document.createElement("span");title.textContent=name;const checkbox=document.createElement("input");checkbox.type="checkbox";checkbox.checked=true;checkbox.addEventListener("change",()=>term(`${name} :: ${checkbox.checked?"on":"off"}`,"in"));label.append(title,checkbox);return label;}));

@@ -9,7 +9,7 @@ const WIB = "Asia/Jakarta";
 const POLL_MS = 60_000;
 const mime = {".html":"text/html; charset=utf-8",".css":"text/css; charset=utf-8",".js":"text/javascript; charset=utf-8",".json":"application/json; charset=utf-8",".svg":"image/svg+xml",".ico":"image/x-icon"};
 const headers = {
-  "Content-Security-Policy":"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'",
+  "Content-Security-Policy":"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'",
   "X-Content-Type-Options":"nosniff",
   "X-Frame-Options":"DENY",
   "Referrer-Policy":"strict-origin-when-cross-origin",
@@ -66,11 +66,12 @@ setInterval(()=>{refreshStatus().catch(()=>{});},POLL_MS);
 
 function decodeXml(value){return value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,"$1").replace(/&#(\d+);/g,(_,n)=>String.fromCodePoint(Number(n))).replace(/&#x([\da-f]+);/gi,(_,n)=>String.fromCodePoint(parseInt(n,16))).replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&apos;/g,"'").trim();}
 function xmlTag(block,tag){const match=block.match(new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${tag}>`,`i`));return match?decodeXml(match[1]):"";}
+function imageFromItem(block){const media=block.match(/<(?:media:content|media:thumbnail|enclosure)\b[^>]*\burl=["']([^"']+)["']/i),description=block.match(/<(?:description|content:encoded)(?:\s[^>]*)?>([\s\S]*?)<\/(?:description|content:encoded)>/i),embedded=description?.[1].match(/<img\b[^>]*\bsrc=["']([^"']+)["']/i),candidate=media?decodeXml(media[1]):embedded?decodeXml(embedded[1]):"";try{const url=new URL(candidate);return url.protocol==="https:"?url.href:null;}catch{return null;}}
 async function getNews(){
   if(newsCache&&Date.now()-newsCheckedAt<5*60_000)return newsCache;
   const url="https://news.google.com/rss/search?q=%22dark+web%22+OR+darknet+OR+%22darknet+market%22&hl=en-US&gl=US&ceid=US:en";
   const response=await fetch(url,{signal:AbortSignal.timeout(9000),headers:{Accept:"application/rss+xml, application/xml, text/xml","User-Agent":"LeoMonitor/1.0"}});if(!response.ok)throw new Error("RSS unavailable");const xml=await response.text();
-  newsCache=[...xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)].slice(0,20).map(([,block])=>{const itemUrl=xmlTag(block,"link"),parsed=new URL(itemUrl);if(parsed.protocol!=="https:")return null;return {title:xmlTag(block,"title"),url:itemUrl,publishedAt:xmlTag(block,"pubDate"),source:xmlTag(block,"source")||"Google News RSS"};}).filter(item=>item&&item.title&&item.url);
+  newsCache=[...xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)].slice(0,20).map(([,block])=>{const itemUrl=xmlTag(block,"link"),parsed=new URL(itemUrl);if(parsed.protocol!=="https:")return null;return {title:xmlTag(block,"title"),url:itemUrl,image:imageFromItem(block),publishedAt:xmlTag(block,"pubDate"),source:xmlTag(block,"source")||"Google News RSS"};}).filter(item=>item&&item.title&&item.url);
   newsCheckedAt=Date.now();return newsCache;
 }
 
