@@ -69,14 +69,7 @@ async function probeEndpoint(id, name, url) {
   }
 }
 
-export default async function handler(request) {
-  if (request.method !== "GET" && request.method !== "HEAD") {
-    return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
-      status: 405,
-      headers: { ...HEADERS, Allow: "GET, HEAD", "Cache-Control": "no-store" },
-    });
-  }
-
+async function handle(request) {
   const services = await Promise.all([
     checkWhatsApp(),
     checkDiscord(),
@@ -91,3 +84,6 @@ export default async function handler(request) {
   });
   return new Response(request.method === "HEAD" ? null : payload, { status: 200, headers: HEADERS });
 }
+
+export const GET = handle;
+export const HEAD = handle;

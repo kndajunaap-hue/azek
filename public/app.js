@@ -51,8 +51,8 @@ function renderServices(payload){
 }
 async function loadStatus(){
   if(statusBusy)return;statusBusy=true;statusButton.disabled=true;statusButton.textContent="Memeriksa…";
-  try{const response=await fetch("/api/monitor",{cache:"no-store",headers:{Accept:"application/json"}});if(!response.ok)throw new Error(`HTTP ${response.status}`);renderServices(await response.json());}
-  catch{$("#monitorMessage").textContent="Backend monitor tidak tersambung. Untuk penggunaan lokal, jalankan npm start.";$("#overallStatus").className="overall-pill unknown";$("#overallStatus").textContent="Backend tidak tersambung";}
+  try{const response=await fetch("/api/monitor",{cache:"no-store",headers:{Accept:"application/json"},signal:AbortSignal.timeout(15000)});if(!response.ok)throw new Error(`HTTP ${response.status}`);const payload=await response.json();if(!Array.isArray(payload.services))throw new Error("Invalid monitor response");renderServices(payload);}
+  catch(error){$("#monitorMessage").textContent=error.name==="TimeoutError"?"Monitor melewati batas waktu. Coba periksa lagi.":"Backend monitor tidak tersambung. Untuk lokal, jalankan npm start; di Vercel periksa Function Logs.";$("#overallStatus").className="overall-pill unknown";$("#overallStatus").textContent="Backend tidak tersambung";}
   finally{statusBusy=false;statusButton.disabled=false;statusButton.textContent="↻ Periksa sekarang";}
 }
 
@@ -100,6 +100,27 @@ $("#scanBtn").addEventListener("click",async()=>{
   $("#scanResults").replaceChildren(...rows);status.textContent=`${rows.length} contoh temuan ditampilkan untuk ${target}. Tidak ada request jaringan yang dikirim.`;button.disabled=false;
 });
 $("#scanClear").addEventListener("click",()=>{$("#scanResults").replaceChildren();$("#scanBar").style.width="0%";$("#scanStatus").textContent="Hasil lokal dibersihkan.";});
+
+$("#siteAuditBtn").addEventListener("click",async()=>{
+  const button=$("#siteAuditBtn"),status=$("#siteAuditStatus"),body=$("#siteAuditResults");
+  button.disabled=true;status.textContent="Memeriksa header situs ini…";
+  try{
+    const response=await fetch(`${location.origin}/`,{method:"HEAD",cache:"no-store",credentials:"same-origin",signal:AbortSignal.timeout(10000)});
+    const headers=response.headers,hasCsp=headers.has("content-security-policy"),hasFrame=headers.has("x-frame-options")||/frame-ancestors/i.test(headers.get("content-security-policy")||"");
+    const checks=[
+      ["Content-Security-Policy",headers.has("content-security-policy"),"Membatasi sumber skrip, konten, dan frame."],
+      ["Strict-Transport-Security",location.protocol!=="https:"||headers.has("strict-transport-security"),location.protocol!=="https:"?"Tidak berlaku pada koneksi HTTP.":"Meminta browser memakai HTTPS."],
+      ["X-Content-Type-Options",headers.get("x-content-type-options")==="nosniff","Mencegah browser menebak tipe konten."],
+      ["Proteksi framing",hasFrame,"X-Frame-Options atau CSP frame-ancestors."],
+      ["Referrer-Policy",headers.has("referrer-policy"),"Mengatur informasi referrer yang dibagikan."],
+      ["Permissions-Policy",headers.has("permissions-policy"),"Membatasi fitur browser yang dapat digunakan."],
+    ];
+    const rows=checks.map(([name,ok,note])=>{const tr=document.createElement("tr");cell(tr,ok?"ADA":"PERLU DICEK");cell(tr,name);cell(tr,note);tr.className=ok?"audit-ok":"audit-missing";return tr;});
+    body.replaceChildren(...rows);const missing=checks.filter(([,ok])=>!ok).length;
+    status.textContent=`Situs diperiksa: ${new URL(location.origin).host} · ${missing?`${missing} header perlu ditinjau`:"header yang diperiksa tersedia"}. Pemeriksaan pasif saja.`;
+  }catch(error){body.replaceChildren();status.textContent=error.name==="TimeoutError"?"Pemeriksaan melewati batas waktu. Coba lagi.":"Header situs tidak dapat dibaca. Jalankan dari hosting situs, bukan file://.";}
+  finally{button.disabled=false;}
+});
 
 const samplePorts=[[443,"TCP","OPEN (CONTOH)","HTTPS"],[80,"TCP","OPEN (CONTOH)","HTTP"],[22,"TCP","FILTERED (CONTOH)","SSH"]];
 $("#srvBtn").addEventListener("click",async()=>{const target=$("#srvTarget").value.trim(),button=$("#srvBtn");if(!target){$("#srvStatus").textContent="Masukkan label host contoh.";return;}button.disabled=true;$("#srvBar").style.width="0%";for(let i=1;i<=4;i++){await sleep(200);$("#srvBar").style.width=`${i*25}%`;}const rows=samplePorts.map(([port,protocol,status,service])=>{const tr=document.createElement("tr");cell(tr,String(port));cell(tr,protocol);cell(tr,status);cell(tr,service);return tr;});$("#srvResults").replaceChildren(...rows);$("#srvStatus").textContent=`Data contoh ditampilkan untuk ${target}. Tidak ada host yang dipindai.`;button.disabled=false;});

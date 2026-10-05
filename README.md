@@ -1,6 +1,6 @@
 # Leo Monitor
 
-Situs statis di `public/` dengan API serverless untuk status layanan dan berita RSS. Tools di tab **Lab & tools** adalah simulasi lokal.
+Situs statis di `public/` dengan API serverless untuk status layanan dan RSS berita dark web. Tab **Lab & tools** memuat pemeriksaan header keamanan pasif untuk situs yang sedang dibuka, contoh scanner lokal, peta visual, dan deface preview di iframe sandbox. Preview tidak mengubah situs atau mengirim konten ke server lain.
 
 ## Deploy ke Vercel
 

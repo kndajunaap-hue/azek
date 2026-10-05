@@ -18,16 +18,9 @@ function xmlTag(block, tag) {
   return match ? decodeXml(match[1]) : "";
 }
 
-export default async function handler(request) {
-  if (request.method !== "GET" && request.method !== "HEAD") {
-    return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
-      status: 405,
-      headers: { ...HEADERS, Allow: "GET, HEAD", "Cache-Control": "no-store" },
-    });
-  }
-
+async function handle(request) {
   try {
-    const url = "https://news.google.com/rss/search?q=%22dark+web%22+cybersecurity+OR+darknet+cybercrime&hl=en-US&gl=US&ceid=US:en";
+    const url = "https://news.google.com/rss/search?q=%22dark+web%22+OR+darknet+OR+%22darknet+market%22&hl=en-US&gl=US&ceid=US:en";
     const response = await fetch(url, {
       signal: AbortSignal.timeout(9000),
       headers: { Accept: "application/rss+xml, application/xml, text/xml", "User-Agent": "LeoMonitor/1.0" },
@@ -54,3 +47,6 @@ export default async function handler(request) {
     });
   }
 }
+
+export const GET = handle;
+export const HEAD = handle;
