@@ -68,7 +68,7 @@ function decodeXml(value){return value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,"$1
 function xmlTag(block,tag){const match=block.match(new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${tag}>`,`i`));return match?decodeXml(match[1]):"";}
 async function getNews(){
   if(newsCache&&Date.now()-newsCheckedAt<5*60_000)return newsCache;
-  const url="https://news.google.com/rss/search?q=%22dark+web%22+cybersecurity+OR+darknet+cybercrime&hl=en-US&gl=US&ceid=US:en";
+  const url="https://news.google.com/rss/search?q=%22dark+web%22+OR+darknet+OR+%22darknet+market%22&hl=en-US&gl=US&ceid=US:en";
   const response=await fetch(url,{signal:AbortSignal.timeout(9000),headers:{Accept:"application/rss+xml, application/xml, text/xml","User-Agent":"LeoMonitor/1.0"}});if(!response.ok)throw new Error("RSS unavailable");const xml=await response.text();
   newsCache=[...xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)].slice(0,20).map(([,block])=>{const itemUrl=xmlTag(block,"link"),parsed=new URL(itemUrl);if(parsed.protocol!=="https:")return null;return {title:xmlTag(block,"title"),url:itemUrl,publishedAt:xmlTag(block,"pubDate"),source:xmlTag(block,"source")||"Google News RSS"};}).filter(item=>item&&item.title&&item.url);
   newsCheckedAt=Date.now();return newsCache;
