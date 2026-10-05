@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Leo Monitor // service status</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#monitor"><span class="brand-dot"></span>Leo <b>Monitor</b></a>
+  <div class="top-meta"><span id="overallStatus" class="overall-pill pending">Menghubungkan…</span><span id="lastChecked">Belum diperiksa</span></div>
+</header>
+<nav class="tabs" aria-label="Navigasi utama">
+  <button class="tab active" data-view="monitor">Status layanan</button>
+  <button class="tab" data-view="news">Berita keamanan</button>
+  <button class="tab" data-view="about">Tentang &amp; sumber</button>
+</nav>
+<main>
+  <section id="view-monitor" class="view active">
+    <div class="section-heading">
+      <div><p class="eyebrow">PEMANTAUAN STATUS PUBLIK</p><h1>Status layanan</h1>
+        <p class="lede">Status diambil dari API status resmi jika tersedia. Untuk Telegram dan TikTok, yang diperiksa hanya akses ke situs publiknya.</p></div>
+      <button id="refreshStatus" class="button" type="button">↻ Periksa sekarang</button>
+    </div>
+    <div class="summary-row"><span id="monitorMessage" aria-live="polite">Memuat status…</span><span>Pembaruan otomatis setiap 60 detik</span></div>
+    <div id="serviceGrid" class="service-grid" aria-live="polite"></div>
+    <p class="maintenance-note"><span class="clock-icon">◷</span> Pemeliharaan situs terjadwal setiap hari pukul <strong>09.00–14.00 WIB</strong>.</p>
+  </section>
+  <section id="view-news" class="view">
+    <div class="section-heading"><div><p class="eyebrow">SUMBER BERITA PUBLIK</p><h1>Berita keamanan siber</h1>
+      <p class="lede">Liputan publik tentang dark web dan keamanan siber; bukan data yang diambil dari forum tersembunyi.</p></div>
+      <button id="refreshNews" class="button secondary" type="button">↻ Muat ulang</button></div>
+    <p id="newsStatus" class="summary-row" aria-live="polite">Memuat berita…</p>
+    <div id="newsList" class="news-list"></div>
+  </section>
+  <section id="view-about" class="view">
+    <div class="section-heading"><div><p class="eyebrow">CAKUPAN DAN BATASAN</p><h1>Tentang monitor</h1></div></div>
+    <div class="about-grid">
+      <article class="info-card"><h2>Status resmi</h2><p>Discord dan WhatsApp Business Platform memakai status yang dipublikasikan oleh penyedia masing-masing. Status itu menggambarkan layanan yang mereka cantumkan, bukan koneksi akun atau perangkat Anda.</p></article>
+      <article class="info-card"><h2>Pemeriksaan endpoint</h2><p>Telegram dan TikTok tidak menyediakan status platform umum yang bisa dipakai monitor ini. Server memeriksa apakah endpoint situs publik merespons. Respons situs tidak membuktikan semua fitur aplikasi sehat.</p></article>
+      <article class="info-card"><h2>Pembaruan</h2><p>Status diperiksa server setiap 60 detik dan tiap kartu menunjukkan waktu pemeriksaan, sumber, serta latensi. Gangguan jaringan dari lokasi server monitor bisa memengaruhi hasil.</p></article>
+      <article class="info-card"><h2>Pemeliharaan</h2><p>Server menyajikan halaman pemeliharaan setiap hari pukul 09.00 sampai 14.00 WIB (Asia/Jakarta).</p></article>
+    </div>
+  </section>
+</main>
+<footer><span>Leo Monitor</span><span>Status publik · pemeliharaan 09.00–14.00 WIB</span></footer>
+<script src="app.js" defer></script>
+</body>
+</html>
